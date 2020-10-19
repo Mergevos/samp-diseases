@@ -31,8 +31,10 @@ public OnPlayerLeavePlayer(playerid, targetid) {
 	return 0;
 }
 
-forward __SpreadDis(playerid);
-public __SpreadDis(playerid)
+forward __SpreadDis(playerid, targetid);
+public __SpreadDis(playerid, targetid)
 {
-    infected_IsPlayer[playerid] = true;
+    if(IsPlayerNextToPlayer(playerid, targetid)) {
+        infected_IsPlayer[playerid] = true;
+    }
 }
