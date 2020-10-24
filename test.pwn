@@ -1,5 +1,4 @@
 #include <a_samp>
-#define SAMP_LOGGER_COMPAT
 #include <personal-space>
 #include <mathutil>
 #include <YSI_Visual\y_commands>
@@ -16,8 +15,15 @@ static
 
 
 
-public OnPlayerApproachPlayer(playerid, targetid, E_APPROACH_DIRECTION:fromDirection) {
+public OnPlayerApproachPlayer(playerid, targetid, E_APPROACH_DIRECTION:fromDirection, Float: angle) {
 
+ /*   new str[130];
+    format(str, sizeof(str), "Angle of direction %f, approach %d needed approach %d", angle, _:GetApproachDirection(angle), _:APPROACH_FROM_FRONT);
+    SendClientMessageToAll(-1, str);
+        
+
+    if(fromDirection == APPROACH_FROM_FRONT) {
+        */
     new globalstr[128];
     format(globalstr, sizeof(globalstr), "Igrac %d prisao igracu %d", playerid, targetid);
     SendClientMessageToAll(-1, globalstr);
@@ -27,8 +33,6 @@ public OnPlayerApproachPlayer(playerid, targetid, E_APPROACH_DIRECTION:fromDirec
         SendClientMessageToAll(-1, "Pokrenut timer");
     }
 
-
-    
 	return 0;
 }
 
