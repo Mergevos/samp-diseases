@@ -5,7 +5,9 @@
 	"output": "test.amx",
 	"dependencies": [
 		"sampctl/samp-stdlib",
-		"Mergevos/personal-space"
+		"Mergevos/personal-space",
+		"Mergevos/samp-logging",
+		"pawn-lang/YSI-Includes@5.x"
 	],
 	"runtime": {
 		"version": "0.3.7",
