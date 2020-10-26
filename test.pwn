@@ -1,5 +1,7 @@
 #include <a_samp>
-#include <personal-space>
+#define DISEASES_LOGGING
+#include "diseases.inc"
+#include <logging>
 #include <mathutil>
 #include <YSI_Visual\y_commands>
 
@@ -8,20 +10,43 @@ main()
     return ;
 }
 
-static 
+new iddd;
+
+public OnGameModeInit(playerid)
+{
+    iddd = Disease_Create(
+        "Test", 6000, TRANSMISSION_CLOSE, 44, 44, 3
+    );
+    iddd = Disease_Create(
+        "Test333", 6000, TRANSMISSION_CLOSE, 44, 44, 3
+    );  
+    printf("%d", iddd);
+    SetTimer("Test", 4000, false);
+    return 1;
+}
+
+forward Test();
+public Test()
+{
+    Disease_Delete(iddd+1);
+    Disease_Delete(iddd);
+}
+
+
+/*static 
     //Iterator: infected_Players<MAX_PLAYERS>,
     bool: infected_IsPlayer[MAX_PLAYERS], 
     infected_Timer[MAX_PLAYERS];
 
 public OnPlayerApproachPlayer(playerid, targetid, E_APPROACH_DIRECTION:fromDirection, Float: angle) {
 
- /*   new str[130];
+ new str[130];
     format(str, sizeof(str), "Angle of direction %f, approach %d needed approach %d", angle, _:GetApproachDirection(angle), _:APPROACH_FROM_FRONT);
     SendClientMessageToAll(-1, str);
         
 
     if(fromDirection == APPROACH_FROM_FRONT) {
-        */
+        
     new globalstr[128];
     format(globalstr, sizeof(globalstr), "Igrac %d prisao igracu %d", playerid, targetid);
     SendClientMessageToAll(-1, globalstr);
@@ -55,7 +80,7 @@ public __SpreadDis(playerid, targetid)
         else if(infected_IsPlayer[playerid] && infected_IsPlayer[targetid]) {
             return SendClientMessageToAll(-1, "zarazeni oboje.");
         }
-        if(Chance < 60.0) {
+        if(Chance < 60.0) { // add within an interior and outside
             if(infected_IsPlayer[targetid] && !infected_IsPlayer[playerid]) {
                 infected_IsPlayer[playerid] = true;
                 SendClientMessageToAll(-1, "Uspesna transmijsija covid19 na igraca koji je prisao");
@@ -85,4 +110,4 @@ YCMD:test2(playerid, params[], help)
 public OnPlayerCommandText(playerid, cmdtext[])
 {
     return 1;
-}
+}*/
