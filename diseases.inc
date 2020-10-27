@@ -5,11 +5,13 @@
 #include <YSI_Coding\y_hooks>
 #include <YSI_Coding\y_timers>
 
+forward OnDiseaseLevelChange(diseaseid, newlevel, oldlevel);
+
+
 // Iter_init
 const 
     MAX_DISEASE_NAME = 40,
     MAX_DISEASES = 30,
-    MAX_DISEASE_SYMPTOMS = 15,
     OUTSIDE_CHANCES = 0, 
     INSIDE_CHANCES = 1;
 
@@ -17,23 +19,23 @@ enum e_TRANSMISSION_TYPE {
     TRANSMISSION_CLOSE = 0
 };
 
-enum e_SYMPTOMS {
-    bool: SYMPTOM_NONE = 0,
-    bool: SYMPTOM_COUGHING,
-    bool: SYMPTOM_SNEEZING,
-    bool: SYMPTOM_HIGHTEMPERATURE,
-    bool: SYMPTOM_BLOOD_PRESSURE,
-    bool: SYMPTOM_ERECTILE_DISFUNCTION,
-    bool: SYMPTOM_NOSE_BLEEDING,
-    bool: SYMPTOM_EAR_BLEEDING,
-    bool: SYMPTOM_DIARRHEA,
-    bool: SYMPTOM_VOMITING,
-    bool: SYMPTOM_INSOMNIA,
-    bool: SYMTPOM_HEADACHE,
-    bool: SYMPTOM_STOMACHACHE,
-    bool: SYMPTOM_CHOKING, 
-    bool: SYMPTOM_SWELLING,
-    bool: SYMPTOM_TOTAL_ORGAN_FAILURE
+enum e_SYMPTOMS(<<=1) {
+    SYMPTOM_NONE = 0,
+    SYMPTOM_COUGHING = 1,
+    SYMPTOM_SNEEZING,
+    SYMPTOM_HIGHTEMPERATURE,
+    SYMPTOM_BLOOD_PRESSURE,
+    SYMPTOM_ERECTILE_DISFUNCTION,
+    SYMPTOM_NOSE_BLEEDING,
+    SYMPTOM_EAR_BLEEDING,
+    SYMPTOM_DIARRHEA,
+    SYMPTOM_VOMITING,
+    SYMPTOM_INSOMNIA,
+    SYMTPOM_HEADACHE,
+    SYMPTOM_STOMACHACHE,
+    SYMPTOM_CHOKING, 
+    SYMPTOM_SWELLING,
+    SYMPTOM_TOTAL_ORGAN_FAILURE
 };
 
 static
@@ -42,19 +44,28 @@ static
     disease_Name[MAX_DISEASES][MAX_DISEASE_NAME],
     disease_Level[MAX_DISEASES],
     disease_TimeOfTransmission[MAX_DISEASES],
-   // disease_Timer[MAX_DISEASES], 
+    Timer: disease_Timer[MAX_PLAYERS], 
     disease_TransChances[MAX_DISEASES][2],
     e_TRANSMISSION_TYPE: disease_TransType[MAX_DISEASES],
-    e_SYMPTOMS: disease_Symptoms[MAX_DISEASES][MAX_DISEASE_SYMPTOMS];
+    e_SYMPTOMS: disease_Symptoms[MAX_DISEASES];
 
 static 
-    bool: player_IsInfected[MAX_PLAYERS];
+    player_Diseases[MAX_PLAYERS];
 
 hook OnGameModeInit()
 {
     Iter_Init(disease_Iter);
     Iter_Init(disease_Infecteds);
     return 1;
+}
+
+stock bool: Disease_IsValid(diseaseid)
+{
+    if(!Iter_Contains(disease_Iter, diseaseid)) {
+        Log_Error("Unexisting disease > ID: %d", "diseases.inc", 163, diseaseid);
+        return false;
+    }
+    return true;
 }
 
 /*
@@ -90,16 +101,13 @@ stock Disease_Create(const name[MAX_DISEASE_NAME], transmission_time, e_TRANSMIS
  * <param name="id">The id of the disease we want to delete</param>
  */
 
-stock Disease_Delete(id)
+stock Disease_Delete(diseaseid)
 {
-    if(!Iter_Contains(disease_Iter, id)) {
-        #if defined DISEASES_LOGGING 
-            Log_Error("Invalid disease ID. ID: %d", "diseases.inc", 97, id);
-        #endif
+    if(!Disease_IsValid(diseaseid)) {
         return 0;
     }
-    Iter_Remove(disease_Iter, id);
-    Log_Info("Deleted Disease > ID: %d", "diseases.inc", 102, id);
+    Iter_Remove(disease_Iter, diseaseid);
+    Log_Info("Deleted Disease > ID: %d", "diseases.inc", 102, diseaseid);
     return 1;
 }
 
@@ -108,9 +116,10 @@ stock Disease_Delete(id)
  * <param name="playerid">The playerid of the player we want to infect</param>
  */
 
-stock Disease_InfectPlayer(playerid)
+stock Disease_InfectPlayer(playerid, diseaseid)
 {
-    player_IsInfected[playerid] = true;
+    player_Diseases[playerid] |= diseaseid;
+    disease_Timer[playerid] = Timer: 0;
     Iter_Add(disease_Infecteds, playerid);
 }
 
@@ -119,9 +128,12 @@ stock Disease_InfectPlayer(playerid)
  * <param name="playerid">The playerid of the player we want to check</param>
  */
 
-stock bool: Disease_IsPlayerInfected(playerid)
+stock bool: Disease_IsPlayerInfected(playerid, diseaseid)
 {
-    return player_IsInfected[playerid];
+    if((player_Diseases[playerid] & diseaseid) == diseaseid) {
+        return true;
+    }
+    return false;
 }
 
 /*
@@ -143,8 +155,36 @@ stock Disease_CurePlayer(playerid)
 
 stock Disease_AddSymptom(diseaseid, e_SYMPTOMS: symptom)
 {
-    if(!Iter_Contains(disease_Iter, diseaseid)) {
-        return Log_Error("Unexisting disease > ID: %d", "diseases.inc", 147, diseaseid);
+    if(!Disease_IsValid(diseaseid)) {
+        return 0;
     }
-    e_SYMPTOMS: disease_Symptoms[diseaseid][_:symptom] = symptom;
+    disease_Symptoms[diseaseid] |= symptom;
+    Log_Info("Added symptom to disease: %d", "diseases.inc", 149, diseaseid);
+    return 1;
 }
+
+/*
+ * <summary>Removes a symptom to a disease</summary>
+ * <param name="diseaseid">The disease we want to remove the symptom from</param>
+ * <param name="e_SYMPTOMS: symptom">The symptom we want to remove</param>
+ */
+
+stock Disease_RemoveSymptom(diseaseid, e_SYMPTOMS: symptom)
+{
+    if(!Disease_IsValid(diseaseid)) {
+        return 0;
+    }
+    disease_Symptoms[diseaseid] &= ~symptom;
+    Log_Info("Removed symptom from disease: %d", "diseases.inc", 166, disease);
+    return 1;
+}
+
+stock Disease_SetLevel(diseaseid, level)
+{
+    if(!Disease_IsValid(diseaseid)) {
+        return 0;
+    }
+    CallLocalFunction("OnDiseaseLevelChange", "ddd", diseaseid, level, disease_Level[diseaseid]);
+    disease_Level[diseaseid] = level;
+}
+
