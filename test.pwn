@@ -14,29 +14,15 @@ new iddd[3];
 
 public OnGameModeInit(playerid)
 {
-    iddd[0] = Disease_Create(
-        "Test", 6000, TRANSMISSION_CLOSE, 44, 44, 3
-    );
-    iddd[1] = Disease_Create(
-        "Test333", 6000, TRANSMISSION_CLOSE, 44, 44, 3
-    );  
     printf("%d", iddd);
     SetTimer("Test", 4000, false);
     return 1;
 }
 
-forward Test();
-public Test()
-{
-    Disease_Delete(iddd[0]);
-    Disease_AddSymptom(iddd[1], SYMPTOM_TOTAL_ORGAN_FAILURE);
-
-}
-
 public OnPlayerConnect(playerid)
 {
-    Disease_InfectPlayer(playerid, iddd[1]);
-    if(Disease_IsPlayerInfected(playerid, iddd[0])) {
+
+    if(!(Disease_IsPlayerInfected(playerid, DISEASE_CRE))) {
         return print("tedttttt");
     }
     return 1;
